@@ -115,6 +115,9 @@ for fold_num in np.arange(5):
         compute_metrics=compute_metrics
     )
     
+    #uncomment following line to train a your own model.
+    #trainer.train()
+    
     with torch.no_grad():
         preds, trues, probs = [], [], []
         for i, data in enumerate(tokenized_test, 0):
