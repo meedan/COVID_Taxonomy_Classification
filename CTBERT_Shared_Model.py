@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[4]:
-
 
 import pickle, json
 import torch
@@ -13,9 +11,6 @@ import numpy as np
 import os
 from datasets import Dataset, Value, ClassLabel, Features
 from transformers import DataCollatorWithPadding
-
-
-# In[2]:
 
 
 def tokenize_function(entry):
@@ -50,9 +45,6 @@ def get_best_checkpoint(input_dir):
         state = json.loads(f.read())
     best_checkpoint = state['best_model_checkpoint']
     return best_checkpoint
-
-
-# In[6]:
 
 
 df = pd.read_csv('covid_facts.csv')
@@ -153,9 +145,7 @@ for fold_num in np.arange(5):
     del model
 
 
-# In[15]:
-
-
+#Evaluation
 def recall_at_k(trues, preds_k, labels=None):
     category_wise_recall = {}
     category_support = {}
@@ -181,7 +171,6 @@ def recall_at_k(trues, preds_k, labels=None):
     return category_wise_recall
 
 
-# In[16]:
 
 
 all_trues = []
@@ -202,16 +191,4 @@ for fold_num in range(5):
     all_preds+=preds
 
 category_wise_recall = recall_at_k(all_trues, all_preds_k)
-
-
-# In[17]:
-
-
-category_wise_recall
-
-
-# In[ ]:
-
-
-
-
+print(category_wise_recall)
