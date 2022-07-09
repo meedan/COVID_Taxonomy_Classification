@@ -1,21 +1,33 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import pickle, json
+#import pickle, json
 import torch
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from stratified_kfold import create_train_test_splits, getstratifiedkfold
-import pandas as pd 
-import numpy as np
+#from stratified_kfold import create_train_test_splits, getstratifiedkfold
+#import pandas as pd 
+#import numpy as np
 import os
-from transformers import DataCollatorWithPadding
-from transformers import TrainingArguments, Trainer
-from sklearn.metrics import classification_report
+#from transformers import DataCollatorWithPadding
+#from transformers import TrainingArguments, Trainer
+#from sklearn.metrics import classification_report
 import copy
 
-from flask import Flask, request
+from typing import Union
 
-app = Flask(__name__)
+from fastapi import FastAPI
+from pydantic import BaseModel
+
+
+class Query(BaseModel):
+    text: str
+
+
+app = FastAPI()
+
+#from flask import Flask, request
+
+#app = Flask(__name__)
 
 def tokenize_function(entry):
 	a = TOKENIZER(entry)
@@ -47,16 +59,18 @@ topk = 3
 TOKENIZER = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-bert-v2")
 model = AutoModelForSequenceClassification.from_pretrained('digitalepidemiologylab/covid-twitter-bert-v2', num_labels=10)
 model = load_model_from_checkpoint(MODEL_DIR, model)
-data_collator = DataCollatorWithPadding(tokenizer=TOKENIZER)
+#data_collator = DataCollatorWithPadding(tokenizer=TOKENIZER)
 
-@app.route('/covid/categorize', methods = ["GET", "POST"])
-def infer_covid_category_http():
-	if request.method == "GET":
-		return json.dumps(OUTPUT_MAP)
-	elif request.method=="POST":
-		data = request.get_json(force=True)
-		text = data["text"]
-		return infer_covid_category(text)
+#@app.route('/covid/categorize', methods = ["GET", "POST"])
+@app.post("/covid/categorize")
+async def infer_covid_category_http(query: Query):
+	#if request.method == "GET":
+	#	return json.dumps(OUTPUT_MAP)
+	#elif request.method=="POST":
+	#	data = request.get_json(force=True)
+	#	text = data["text"]
+	#	return infer_covid_category(text)
+	return infer_covid_category(query.text)
 
 def infer_covid_category(text):
 	#query_input=["the vaccine increases your chances of getting covid", "eat alkaline foods to prevent covid", "More vaccinated than unvaccinated people are dying from COVID","the virus isn't real", "The virus is caused by 5G"]
@@ -75,7 +89,7 @@ def infer_covid_category(text):
 			entry["probability"]=prob
 		#Sort by probability
 		raw_output.sort(reverse=True,key=lambda x:x["probability"])
-		return json.dumps(raw_output)
+		return raw_output
 
 if __name__=="__main__":
 	print("---------------------")
