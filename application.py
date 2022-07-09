@@ -13,9 +13,9 @@ from transformers import TrainingArguments, Trainer
 from sklearn.metrics import classification_report
 import copy
 
-#from flask import Flask, url_for, render_template, Response, request
+from flask import Flask, request
 
-#app = Flask(__name__)
+app = Flask(__name__)
 
 def tokenize_function(entry):
 	a = TOKENIZER(entry)
@@ -49,7 +49,15 @@ model = AutoModelForSequenceClassification.from_pretrained('digitalepidemiologyl
 model = load_model_from_checkpoint(MODEL_DIR, model)
 data_collator = DataCollatorWithPadding(tokenizer=TOKENIZER)
 
-#@app.route('/covid/categorize')
+@app.route('/covid/categorize', methods = ["GET", "POST"])
+def infer_covid_category_http():
+	if request.method == "GET":
+		return json.dumps(OUTPUT_MAP)
+	elif request.method=="POST":
+		data = request.get_json(force=True)
+		text = data["text"]
+		return infer_covid_category(text)
+
 def infer_covid_category(text):
 	#query_input=["the vaccine increases your chances of getting covid", "eat alkaline foods to prevent covid", "More vaccinated than unvaccinated people are dying from COVID","the virus isn't real", "The virus is caused by 5G"]
 	tokenized_input=tokenize_function(text)
@@ -69,5 +77,7 @@ def infer_covid_category(text):
 		raw_output.sort(reverse=True,key=lambda x:x["probability"])
 		return json.dumps(raw_output)
 
-print("---------------------")
-print(infer_covid_category("the vaccine increases your chances of getting covid"))
+if __name__=="__main__":
+	print("---------------------")
+	print(infer_covid_category("the vaccine increases your chances of getting covid"))
+	
