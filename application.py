@@ -72,9 +72,9 @@ async def infer_covid_category_http(query: Query):
 	#	return infer_covid_category(text)
 	return infer_covid_category(query.text,topk)
 
-def infer_covid_category(text):
+def infer_covid_category(text,num_results):
 	#query_input=["the vaccine increases your chances of getting covid", "eat alkaline foods to prevent covid", "More vaccinated than unvaccinated people are dying from COVID","the virus isn't real", "The virus is caused by 5G"]
-	tokenized_input=tokenize_function(text,num_results)
+	tokenized_input=tokenize_function(text)
 	with torch.no_grad():
 		print("query:", text)
 		inputs = torch.tensor([tokenized_input['input_ids']])
