@@ -42,15 +42,15 @@ def load_model_from_checkpoint(path, model):
 
 #https://www.factcheck.org/covid-misconceptions/
 OUTPUT_MAP=[
-	{"id":0, "label":"Scientific Findings/Misleading Attacks on Public Health Scientists","url":"https://www.factcheck.org/scicheck_digest/did-the-speed-of-vaccine-development-compromise-on-safety/"},
-	{"id":1, "label":"The Origins of COVID-19","url":"https://www.factcheck.org/scicheck_digest/what-do-we-know-about-the-origins-of-sars-cov-2/"},
-	{"id":2, "label":"Transmission","url":"https://www.factcheck.org/scicheck_digest/how-is-covid-19-transmitted/"},
-	{"id":3, "label":"The Nature, Existence, and Virulence of SARS-CoV-2","url":"https://www.factcheck.org/scicheck_digest/how-lethal-is-covid-19/"},
-	{"id":4, "label":"Diagnosis and Tracing","url":"https://www.factcheck.org/scicheck_digest/what-tests-are-available-for-covid-19/"},
-	{"id":5, "label":"Prevention (3 W’s, ventilation, lockdowns/quarantine)","url":"https://www.factcheck.org/scicheck_digest/what-evidence-supports-the-use-of-face-masks-against-the-coronavirus/"},
-	{"id":6, "label":"Preventatives and Treatment","url":"https://www.factcheck.org/scicheck_digest/what-treatments-are-available-for-covid-19/"},
-	{"id":7, "label":"Vaccination","url":"#vaccination#"}, #TODO: This category needs one summarizing article!
-	{"id":8, "label":"Misrepresentation of Constitutional Protections or Government Guidance","url":"https://www.factcheck.org/scicheck_digest/could-a-covid-19-vaccine-become-mandatory/"},
+	{"id":0, "label":"Distortions of Science", "title":"How were safe and effective vaccines developed so rapidly?", "url":"https://www.factcheck.org/scicheck_digest/did-the-speed-of-vaccine-development-compromise-on-safety/"},
+	{"id":1, "label":"The Origins of COVID-19", "title":"What do we know about the origins of SARS-CoV-2?", "url":"https://www.factcheck.org/scicheck_digest/what-do-we-know-about-the-origins-of-sars-cov-2/"},
+	{"id":2, "label":"Transmission","title":"How is COVID-19 transmitted?","url":"https://www.factcheck.org/scicheck_digest/how-is-covid-19-transmitted/"},
+	{"id":3, "label":"The Nature, Existence, and Virulence of SARS-CoV-2","title":"How lethal is COVID-19?", "url":"https://www.factcheck.org/scicheck_digest/how-lethal-is-covid-19/"},
+	{"id":4, "label":"Diagnosis and Tracing","title":"What tests are available for COVID-19?", "url":"https://www.factcheck.org/scicheck_digest/what-tests-are-available-for-covid-19/"},
+	{"id":5, "label":"Prevention","title":"What evidence supports the use of face masks against the coronavirus?", "url":"https://www.factcheck.org/scicheck_digest/what-evidence-supports-the-use-of-face-masks-against-the-coronavirus/"},
+	{"id":6, "label":"Preventatives and Treatment","title":"What treatments are available for COVID-19?", "url":"https://www.factcheck.org/scicheck_digest/what-treatments-are-available-for-covid-19/"},
+	{"id":7, "label":"Vaccination","title":"The latest information about COVID-19 vaccinations","url":"https://www.factcheck.org/covid-misconceptions/#:~:text=is%20Industrial%20Bleach-,Vaccination,-SciCheck%20Digests"},
+	{"id":8, "label":"Misrepresentation of Government Guidance","title":"What is the latest government guidance?","url":"https://www.factcheck.org/covid-misconceptions/#:~:text=Misrepresentation%20of%20Government%20Guidance"},
 ]
 	
 
@@ -70,11 +70,11 @@ async def infer_covid_category_http(query: Query):
 	#	data = request.get_json(force=True)
 	#	text = data["text"]
 	#	return infer_covid_category(text)
-	return infer_covid_category(query.text)
+	return infer_covid_category(query.text,topk)
 
 def infer_covid_category(text):
 	#query_input=["the vaccine increases your chances of getting covid", "eat alkaline foods to prevent covid", "More vaccinated than unvaccinated people are dying from COVID","the virus isn't real", "The virus is caused by 5G"]
-	tokenized_input=tokenize_function(text)
+	tokenized_input=tokenize_function(text,num_results)
 	with torch.no_grad():
 		print("query:", text)
 		inputs = torch.tensor([tokenized_input['input_ids']])
@@ -89,7 +89,7 @@ def infer_covid_category(text):
 			entry["probability"]=prob
 		#Sort by probability
 		raw_output.sort(reverse=True,key=lambda x:x["probability"])
-		return raw_output
+		return raw_output[0:num_results]
 
 if __name__=="__main__":
 	print("---------------------")
