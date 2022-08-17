@@ -16,14 +16,35 @@ import copy
 from typing import Union
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import requests
+import json
+from joblib import Memory
+location = './cachedir'
+disk_cache = Memory(location, verbose=0)
 
 class Query(BaseModel):
     text: str
 
 
 app = FastAPI()
+
+origins = [
+	#"http://localhost:3000",
+	"https://coinsights.org",
+	"https://demo.coinsights.org",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 #from flask import Flask, request
 
@@ -60,6 +81,35 @@ TOKENIZER = AutoTokenizer.from_pretrained("digitalepidemiologylab/covid-twitter-
 model = AutoModelForSequenceClassification.from_pretrained('digitalepidemiologylab/covid-twitter-bert-v2', num_labels=10)
 model = load_model_from_checkpoint(MODEL_DIR, model)
 #data_collator = DataCollatorWithPadding(tokenizer=TOKENIZER)
+
+
+feed_headers={
+"Accept": "application/vnd.api+json",
+"X-Check-Token": open(".token").read().strip(),
+}
+
+@app.get("/default/coinsights-demo")
+async def default_http(type: str = "feeds", categorizationQuery:str ="", feedsType:str="text", feedsQuery:str=""):
+	if type=="feeds" and feedsQuery!="":
+		feed_params={
+			"filter[type]":feedsType,
+			"filter[query]":feedsQuery
+		}
+		return feed_query_cache(feed_params)
+	elif type=="categorization" and categorizationQuery!="":
+		return {"data":infer_covid_category(categorizationQuery,topk)}
+	else:
+		return {"error":"Missing parameters."}
+
+def feed_query_cache(feed_params):
+	#if feed_params["filter[query]"] in FEED_CACHE:
+	#	return FEED_CACHE[feed_params]
+	#else:
+	resp=requests.get("https://check-api.checkmedia.org/api/v2/feeds",params=feed_params,headers=feed_headers)
+	resp={"data":resp.json()["data"]}
+	#feed_params["filter[query]"]=resp
+	return resp
+feed_query_cache=disk_cache.cache(feed_query_cache)
 
 #@app.route('/covid/categorize', methods = ["GET", "POST"])
 @app.post("/covid/categorize")
